@@ -20,6 +20,7 @@
 #include "SocialMgr.h"
 #include <iostream>
 #include <string>
+#include <chrono>
 
 using namespace std;
 
@@ -61,6 +62,11 @@ std::string world_chat_GM_RANKS[4] = {
 
 /* BLIZZARD CHAT ICON FOR GM'S */
 std::string world_chat_GMIcon = "|TINTERFACE/CHATFRAME/UI-CHATICON-BLIZZ:13:13:0:-1|t";
+std::string star1icon = "|TINTERFACE/ICONS/Achievement_PVP_P_01:13:13:0:-1|t";
+std::string star2icon = "|TINTERFACE/ICONS/Achievement_PVP_P_02:13:13:0:-1|t";
+std::string star3icon = "|TINTERFACE/ICONS/Achievement_PVP_P_03:13:13:0:-1|t";
+std::string star4icon = "|TINTERFACE/ICONS/Achievement_PVP_P_04:13:13:0:-1|t";
+std::string star5icon = "|TINTERFACE/ICONS/Achievement_PVP_P_05:13:13:0:-1|t";
 
 /* COLORED TEXT FOR CURRENT FACTION || NOT FOR GMS */
 std::string world_chat_TeamIcon[2] = {"|cff3399FF联盟|r", "|cffCC0000部落|r"};
@@ -99,6 +105,10 @@ struct ChatElements
 {
     uint8  chat     = (WC_Config.LoginState) ? 1 : 0; // CHAT DISABLED BY DEFAULT
     double cooldown = 0;
+
+    //增加星团长数据
+    uint8  rank     = 0;
+    double  rankupdatemark = 0;
 };
 
 /* UNORDERED MAP FOR STORING IF CHAT IS ENABLED OR DISABLED */
@@ -106,7 +116,7 @@ std::unordered_map<uint32, ChatElements> WorldChat;
 
 void SendWorldMessage(Player* sender, const char* msg, int team)
 {
-    double timenow = GetTickCount64();
+    double timenow = getMSTime();
 
     if (!WC_Config.Enabled)
     {
@@ -144,8 +154,28 @@ void SendWorldMessage(Player* sender, const char* msg, int team)
         ChatHandler(sender->GetSession()).PSendSysMessage("[世界] %s世界频道禁止使用完成二字(会导致玩家任务插件错误通报).|r", WORLD_CHAT_RED.c_str());
         return;
     }
-
     //屏蔽系统
+
+    //修复链接后黄字
+    string flag = "|r";
+    string::size_type position = 0;
+    uint8 rflag = 0;
+    while ((position = msgfiter.find(flag, position)) != string::npos)
+    {
+        if (position + 2 < msgfiter.length())
+        {
+            msgfiter = msgfiter.insert(position + 2, WORLD_CHAT_WHITE.c_str());
+            rflag = 1;
+        }
+        if (position + 2 >= msgfiter.length())
+            rflag = 2;
+        position++;
+    }
+    if (rflag == 1)
+        msgfiter = msgfiter.insert(msgfiter.length(), flag);
+    msg = msgfiter.c_str();
+    //修复链接后黄字
+
 
     //记录系统,需要添加 Appender.SJCHAT=2,5,9,./chat/SJ.log   以及 Logger.chat.sj=5,Console SJCHAT
     char messagelog[1024];
@@ -159,6 +189,17 @@ void SendWorldMessage(Player* sender, const char* msg, int team)
     }
     LOG_INFO("chat.sj", messagelog);
     //记录系统
+
+    //初始化星团长
+    if (WorldChat[sender->GetGUID().GetCounter()].rankupdatemark < (timenow -30000) || WorldChat[sender->GetGUID().GetCounter()].rankupdatemark == 0 )
+    {
+        WorldChat[sender->GetGUID().GetCounter()].rankupdatemark = timenow;
+        QueryResult result = CharacterDatabase.Query("SELECT `rank` FROM `_star` WHERE id = '{}'", sender->GetSession()->GetAccountId());
+        if (result)
+        {
+            WorldChat[sender->GetGUID().GetCounter()].rank = (*result)[0].Get<uint8>();
+        }
+    }
 
     char message[1024];
 
@@ -193,7 +234,40 @@ void SendWorldMessage(Player* sender, const char* msg, int team)
                     }
                     else
                     {
-                        snprintf(message, 1024, "[%s][%s|Hplayer:%s|h%s|h|r]: %s%s|r", world_chat_TeamIcon[sender->GetTeamId()].c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                        //检测是否星团长
+                        uint8 rank = WorldChat[sender->GetGUID().GetCounter()].rank;
+                        if (rank && rank > 0)
+                        {
+                            if (rank == 1)
+                            {
+                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star1icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                //WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
+                            }
+                            if (rank == 2)
+                            {
+                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star2icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                //WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
+                            }
+                            if (rank == 3)
+                            {
+                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star3icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
+                            }
+                            if (rank == 4)
+                            {
+                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star4icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
+                            }
+                            if (rank == 5)
+                            {
+                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star5icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
+                            }
+                        }
+                        else
+                        {
+                            snprintf(message, 1024, "[%s][%s|Hplayer:%s|h%s|h|r]: %s%s|r", world_chat_TeamIcon[sender->GetTeamId()].c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                        }
                     }
                     ChatHandler(target->GetSession()).PSendSysMessage("%s", message);
                 }
