@@ -24,6 +24,10 @@
 
 using namespace std;
 
+#if AC_COMPILER == AC_COMPILER_GNU
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 /* VERSION */
 float ver = 2.0f;
 
@@ -89,13 +93,12 @@ public:
     WorldChat_Config() : WorldScript("WorldChat_Config") {};
     void OnBeforeConfigLoad(bool reload) override
     {
-        if (!reload)
-        {
-            WC_Config.Enabled      = sConfigMgr->GetBoolDefault("World_Chat.Enable", true);
-            WC_Config.ChannelName  = sConfigMgr->GetStringDefault("World_Chat.ChannelName", "World");
-            WC_Config.LoginState   = sConfigMgr->GetBoolDefault("World_Chat.OnLogin.State", true);
-            WC_Config.CrossFaction = sConfigMgr->GetBoolDefault("World_Chat.CrossFactions", true);
-            WC_Config.Announce     = sConfigMgr->GetBoolDefault("World_Chat.Announce", true);
+        if (!reload) {
+            WC_Config.Enabled = sConfigMgr->GetOption<bool>("World_Chat.Enable", true);
+            WC_Config.ChannelName = sConfigMgr->GetOption<std::string>("World_Chat.ChannelName", "World");
+            WC_Config.LoginState = sConfigMgr->GetOption<bool>("World_Chat.OnLogin.State", true);
+            WC_Config.CrossFaction = sConfigMgr->GetOption<bool>("World_Chat.CrossFactions", true);
+            WC_Config.Announce = sConfigMgr->GetOption<bool>("World_Chat.Announce", true);
         }
     }
 };
@@ -114,25 +117,25 @@ struct ChatElements
 /* UNORDERED MAP FOR STORING IF CHAT IS ENABLED OR DISABLED */
 std::unordered_map<uint32, ChatElements> WorldChat;
 
-void SendWorldMessage(Player* sender, const char* msg, int team)
-{
-    double timenow = getMSTime();
-
+void SendWorldMessage(Player* sender, const std::string msg, int team) {
+	
+	double timenow = getMSTime();
+	
     if (!WC_Config.Enabled)
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] %s世界频道已关闭.|r", WORLD_CHAT_RED.c_str());
+        ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}世界频道已关闭.|r", WORLD_CHAT_RED));
         return;
     }
 
     if (!sender->CanSpeak())
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] %s禁言玩家禁止使用世界频道!|r", WORLD_CHAT_RED.c_str());
+        ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}禁言玩家禁止使用世界频道!|r", WORLD_CHAT_RED));
         return;
     }
 
     if (!WorldChat[sender->GetGUID().GetCounter()].chat)
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] %s世界频道已关闭. (使用.sj on重新打开)|r", WORLD_CHAT_RED.c_str());
+        ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}世界频道已关闭. (使用.sj on重新打开)|r", WORLD_CHAT_RED));
         return;
     }
 
@@ -201,18 +204,22 @@ void SendWorldMessage(Player* sender, const char* msg, int team)
         }
     }
 
-    char message[1024];
+    std::string message;
 
     SessionMap sessions = sWorld->GetAllSessions();
 
     for (SessionMap::iterator itr = sessions.begin(); itr != sessions.end(); ++itr)
     {
         if (!itr->second)
+        {
             continue;
+        }
+
         if (!itr->second->GetPlayer())
         {
             continue;
         }
+
         if (!itr->second->GetPlayer()->IsInWorld())
         {
             continue;
@@ -229,7 +236,7 @@ void SendWorldMessage(Player* sender, const char* msg, int team)
                 {
                     if (sender->isGMChat())
                     {
-                        snprintf(message, 1024, "[%s][%s|Hplayer:%s|h%s|h|r]: %s%s|r", ((sender->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER)) ? (world_chat_ClassColor[5] + "DEV|r").c_str() : world_chat_GMIcon.c_str()), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                        message = Acore::StringFormat("[世界][{}][{}|Hplayer:{}|h{}|h|r]: {}{}|r", ((sender->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER)) ? (world_chat_ClassColor[5] + "DEV|r") : world_chat_GMIcon), world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                         WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                     }
                     else
@@ -240,41 +247,43 @@ void SendWorldMessage(Player* sender, const char* msg, int team)
                         {
                             if (rank == 1)
                             {
-                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star1icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star1icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 //WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                             if (rank == 2)
                             {
-                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star2icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star2icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 //WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                             if (rank == 3)
                             {
-                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star3icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star3icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                             if (rank == 4)
                             {
-                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star4icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star4icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                             if (rank == 5)
                             {
-                                snprintf(message, 1024, "[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star5icon.c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star5icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                         }
                         else
                         {
-                            snprintf(message, 1024, "[%s][%s|Hplayer:%s|h%s|h|r]: %s%s|r", world_chat_TeamIcon[sender->GetTeamId()].c_str(), world_chat_ClassColor[sender->getClass() - 1].c_str(), sender->GetName().c_str(), sender->GetName().c_str(), WORLD_CHAT_WHITE.c_str(), msg);
+                            message = Acore::StringFormat("[世界][{}][{}|Hplayer:{}|h{}|h|r]: {}{}|r", world_chat_TeamIcon[sender->GetTeamId()], world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                         }
                     }
-                    ChatHandler(target->GetSession()).PSendSysMessage("%s", message);
+                    ChatHandler(target->GetSession()).PSendSysMessage(Acore::StringFormat("{}", message));
                 }
             }
         }
     }
 }
+
+using namespace Acore::ChatCommands;
 
 class World_Chat : public CommandScript
 {
@@ -285,7 +294,9 @@ public:
     {
 
         if (!*msg)
+        {
             return false;
+        }
 
         SendWorldMessage(pChat->GetSession()->GetPlayer(), msg, -1);
 
@@ -296,7 +307,9 @@ public:
     {
 
         if (!*msg)
+        {
             return false;
+        }
 
         SendWorldMessage(pChat->GetSession()->GetPlayer(), msg, TEAM_HORDE);
 
@@ -307,7 +320,9 @@ public:
     {
 
         if (!*msg)
+        {
             return false;
+        }
 
         SendWorldMessage(pChat->GetSession()->GetPlayer(), msg, TEAM_ALLIANCE);
 
@@ -319,21 +334,19 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
         uint64  guid   = player->GetGUID().GetCounter();
 
-        if (!WC_Config.Enabled)
-        {
-            ChatHandler(player->GetSession()).PSendSysMessage("[世界] %sWorld Chat System is disabled.|r", WORLD_CHAT_RED.c_str());
+        if (!WC_Config.Enabled) {
+            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}World Chat System is disabled.|r", WORLD_CHAT_RED));
             return true;
         }
 
-        if (WorldChat[guid].chat)
-        {
-            ChatHandler(player->GetSession()).PSendSysMessage("[世界] %sWorld Chat is already visible.|r", WORLD_CHAT_RED.c_str());
+        if (WorldChat[guid].chat) {
+            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}World Chat is already visible.|r", WORLD_CHAT_RED));
             return true;
         }
 
         WorldChat[guid].chat = 1;
 
-        ChatHandler(player->GetSession()).PSendSysMessage("[世界] %sWorld Chat is now visible.|r", WORLD_CHAT_GREEN.c_str());
+        ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}World Chat is now visible.|r", WORLD_CHAT_GREEN));
 
         return true;
     };
@@ -343,38 +356,43 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
         uint64  guid   = player->GetGUID().GetCounter();
 
-        if (!sConfigMgr->GetBoolDefault("World_Chat.Enable", true))
+        if (!sConfigMgr->GetOption<bool>("World_Chat.Enable", true))
         {
-            ChatHandler(player->GetSession()).PSendSysMessage("[世界] %sWorld Chat System is disabled.|r", WORLD_CHAT_RED.c_str());
+            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}World Chat System is disabled.|r", WORLD_CHAT_RED));
             return true;
         }
 
         if (!WorldChat[guid].chat)
         {
-            ChatHandler(player->GetSession()).PSendSysMessage("[世界] %sWorld Chat is already hidden.|r", WORLD_CHAT_RED.c_str());
+            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}World Chat is already hidden.|r", WORLD_CHAT_RED));
             return true;
         }
 
         WorldChat[guid].chat = 0;
 
-        ChatHandler(player->GetSession()).PSendSysMessage("[世界] %sWorld Chat is now hidden.|r", WORLD_CHAT_GREEN.c_str());
+        ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[世界] {}World Chat is now hidden.|r", WORLD_CHAT_GREEN));
 
         return true;
     };
 
-    std::vector<ChatCommand> GetCommands() const
+    ChatCommandTable GetCommands() const override
     {
-        static std::vector<ChatCommand> wcCommandTable = {
-            {"on", SEC_PLAYER, false, &HandleWorldChatOnCommand, ""},
-            {"off", SEC_PLAYER, false, &HandleWorldChatOffCommand, ""},
-            {"", SEC_PLAYER, false, &HandleWorldChatCommand, ""},
+        static ChatCommandTable wcCommandTable =
+        {
+            { "on",      HandleWorldChatOnCommand, SEC_PLAYER, Console::No },
+            { "off",     HandleWorldChatOffCommand, SEC_PLAYER, Console::No },
+            { "",        HandleWorldChatCommand, SEC_PLAYER, Console::No },
         };
-        static std::vector<ChatCommand> commandTable = {
-            {"sj", SEC_PLAYER, true, NULL, "", wcCommandTable},
-            {"chath", SEC_MODERATOR, true, &HandleWorldChatHordeCommand, ""},
-            {"chata", SEC_MODERATOR, true, &HandleWorldChatAllianceCommand, ""},
+
+        static ChatCommandTable commandTable =
+        {
+            { "sj", wcCommandTable },
+            { "chath", HandleWorldChatHordeCommand, SEC_MODERATOR, Console::Yes},
+            { "chata", HandleWorldChatAllianceCommand, SEC_MODERATOR, Console::Yes},
         };
+
         return commandTable;
+
     }
 };
 
@@ -388,7 +406,7 @@ public:
         // Announce Module
         if (WC_Config.Enabled && WC_Config.Announce)
         {
-            ChatHandler(player->GetSession()).SendSysMessage(("This server is running the |cff4CFF00WorldChat |rmodule. Use .chat" + ((WC_Config.ChannelName != "") ? " or use /join " + WC_Config.ChannelName : "") + " to communicate" + ((!WC_Config.CrossFaction) ? " with your faction." : ".")).c_str());
+            ChatHandler(player->GetSession()).SendSysMessage(("This server is running the |cff4CFF00WorldChat |rmodule. Use .chat" + ((WC_Config.ChannelName != "") ? " or use /join " + WC_Config.ChannelName : "") + " to communicate"+ ((!WC_Config.CrossFaction) ? " with your faction." : ".")));
         }
     }
 
@@ -396,7 +414,7 @@ public:
     {
         if (WC_Config.ChannelName != "" && lang != LANG_ADDON && !strcmp(channel->GetName().c_str(), WC_Config.ChannelName.c_str()))
         {
-            SendWorldMessage(player, msg.c_str(), -1);
+            SendWorldMessage(player, msg, -1);
             msg = -1;
         }
     }
@@ -404,7 +422,7 @@ public:
 
 void AddSC_WorldChatScripts()
 {
-    new WorldChat_Announce;
-    new WorldChat_Config;
-    new World_Chat;
+    new WorldChat_Announce();
+    new WorldChat_Config();
+    new World_Chat();
 }
