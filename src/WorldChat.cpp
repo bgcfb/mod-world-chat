@@ -117,7 +117,7 @@ struct ChatElements
 /* UNORDERED MAP FOR STORING IF CHAT IS ENABLED OR DISABLED */
 std::unordered_map<uint32, ChatElements> WorldChat;
 
-void SendWorldMessage(Player* sender, const std::string msg, int team) {
+void SendWorldMessage(Player* sender, std::string msg, int team) {
 	
 	double timenow = getMSTime();
 	
@@ -145,7 +145,7 @@ void SendWorldMessage(Player* sender, const std::string msg, int team) {
     }
     else
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] %s世界频道说话太快,请稍等 %d秒再试,请勿刷屏|r", WORLD_CHAT_RED.c_str(), (int) (WorldChat[sender->GetGUID().GetCounter()].cooldown + 15000 - timenow) / 1000);
+        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] {}世界频道说话太快,请稍等 %d秒再试,请勿刷屏|r", WORLD_CHAT_RED.c_str(), (int) (WorldChat[sender->GetGUID().GetCounter()].cooldown + 15000 - timenow) / 1000);
         return;
     }
 
@@ -154,7 +154,7 @@ void SendWorldMessage(Player* sender, const std::string msg, int team) {
 
     if (msgfiter.find("完成") < msgfiter.length())
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] %s世界频道禁止使用完成二字(会导致玩家任务插件错误通报).|r", WORLD_CHAT_RED.c_str());
+        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] {}世界频道禁止使用完成二字(会导致玩家任务插件错误通报).|r", WORLD_CHAT_RED.c_str());
         return;
     }
     //屏蔽系统
@@ -184,13 +184,13 @@ void SendWorldMessage(Player* sender, const std::string msg, int team) {
     char messagelog[1024];
     if (sender->GetGuild())
     {
-        snprintf(messagelog, 1024, "[%s][%s]:%s", sender->GetGuildName().c_str(), sender->GetName().c_str(), msg);
+        snprintf(messagelog, 1024, "[%s][%s]:%s", sender->GetGuildName().c_str(), sender->GetName().c_str(), msg.c_str());
     }
     else
     {
-        snprintf(messagelog, 1024, "[无公会][%s]:%s", sender->GetName().c_str(), msg);
+        snprintf(messagelog, 1024, "[无公会][%s]:%s", sender->GetName().c_str(), msg.c_str());
     }
-    LOG_INFO("chat.sj", messagelog);
+    LOG_INFO("chat.sj", "{}", messagelog);
     //记录系统
 
     //初始化星团长
@@ -247,27 +247,27 @@ void SendWorldMessage(Player* sender, const std::string msg, int team) {
                         {
                             if (rank == 1)
                             {
-                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star1icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
+                                message = Acore::StringFormat("[{}星团长][{}|Hplayer:{}|h{}|h|r]: {}{}|r", star1icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 //WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                             if (rank == 2)
                             {
-                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star2icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
+                                message = Acore::StringFormat("[{}星团长][{}|Hplayer:{}|h{}|h|r]: {}{}|r", star2icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 //WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                             if (rank == 3)
                             {
-                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star3icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
+                                message = Acore::StringFormat("[{}星团长][{}|Hplayer:{}|h{}|h|r]: {}{}|r", star3icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                             if (rank == 4)
                             {
-                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star4icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
+                                message = Acore::StringFormat("[{}星团长][{}|Hplayer:{}|h{}|h|r]: {}{}|r", star4icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                             if (rank == 5)
                             {
-                                message = Acore::StringFormat("[%s星团长][%s|Hplayer:%s|h%s|h|r]: %s%s|r", star5icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
+                                message = Acore::StringFormat("[{}星团长][{}|Hplayer:{}|h{}|h|r]: {}{}|r", star5icon, world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                                 WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                             }
                         }
