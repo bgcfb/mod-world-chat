@@ -236,7 +236,7 @@ void SendWorldMessage(Player* sender, std::string msg, int team) {
                 {
                     if (sender->isGMChat())
                     {
-                        message = Acore::StringFormat("[世界][{}][{}|Hplayer:{}|h{}|h|r]: {}{}|r", ((sender->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER)) ? (world_chat_ClassColor[5] + "DEV|r") : world_chat_GMIcon), world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
+                        message = Acore::StringFormat("[{}][{}|Hplayer:{}|h{}|h|r]: {}{}|r", ((sender->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER)) ? (world_chat_ClassColor[5] + "DEV|r") : world_chat_GMIcon), world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                         WorldChat[sender->GetGUID().GetCounter()].cooldown = 0;
                     }
                     else
@@ -273,7 +273,7 @@ void SendWorldMessage(Player* sender, std::string msg, int team) {
                         }
                         else
                         {
-                            message = Acore::StringFormat("[世界][{}][{}|Hplayer:{}|h{}|h|r]: {}{}|r", world_chat_TeamIcon[sender->GetTeamId()], world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
+                            message = Acore::StringFormat("[{}][{}|Hplayer:{}|h{}|h|r]: {}{}|r", world_chat_TeamIcon[sender->GetTeamId()], world_chat_ClassColor[sender->getClass() - 1], sender->GetName(), sender->GetName(), WORLD_CHAT_WHITE, msg);
                         }
                     }
                     ChatHandler(target->GetSession()).PSendSysMessage(Acore::StringFormat("{}", message));
