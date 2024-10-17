@@ -145,7 +145,7 @@ void SendWorldMessage(Player* sender, std::string msg, int team) {
     }
     else
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] {}世界频道说话太快,请稍等 %d秒再试,请勿刷屏|r", WORLD_CHAT_RED.c_str(), (int) (WorldChat[sender->GetGUID().GetCounter()].cooldown + 15000 - timenow) / 1000);
+        ChatHandler(sender->GetSession()).PSendSysMessage("[世界] {}世界频道说话太快,请稍等 {} 秒再试,请勿刷屏|r", WORLD_CHAT_RED.c_str(), (int) (WorldChat[sender->GetGUID().GetCounter()].cooldown + 15000 - timenow) / 1000);
         return;
     }
 
