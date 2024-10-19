@@ -190,7 +190,11 @@ void SendWorldMessage(Player* sender, std::string msg, int team) {
     {
         snprintf(messagelog, 1024, "[无公会][%s]:%s", sender->GetName().c_str(), msg.c_str());
     }
-    LOG_INFO("chat.sj", "{}", messagelog);
+    string logmessage = messagelog;
+    size_t flagpos;
+    while (((flagpos = logmessage.find("{")) != std::string::npos)or ((flagpos = logmessage.find("}")) != std::string::npos))
+        logmessage.replace(flagpos, 1, "|");
+    LOG_INFO("chat.sj", "{}", logmessage);
     //记录系统
 
     //初始化星团长
